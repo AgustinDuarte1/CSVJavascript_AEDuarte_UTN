@@ -1,4 +1,6 @@
+import { error } from "console";
 import fs from "fs/promises"
+import { type } from "os";
 
 export class CSV{
     constructor(folder = 'csvs', fileName) {
@@ -13,8 +15,9 @@ export class CSV{
         try {
             const datos = await fs.readFile(this.filePath, 'utf-8');
             return datos;
-        } catch {
+        } catch (err){
             console.log('Error al leer el CSV')
+            console.error(err);
         }
     }
 
@@ -27,15 +30,19 @@ export class CSV{
         }
     }
 
-    /* Este método listar iría en otro lugar.
-    async listar(){
-        try{
-            const archivos = await fs.readdir(this.folder);
-            return archivos.filter(a => a.endsWith('.csv'));
+    static async #listar () {
+        const archivo = await fs.readdir("csvs")
+       return archivo.filter(nombre => nombre.endsWith('.csv'))
+    }
+
+    static async listar_csv () {
+        try {
+            return await this.#listar()
         } catch {
-            console.log('Error al listar archivos.')
+            await fs.mkdir("csvs", {recursive: true})
+            return await this.#listar()
         }
-    }*/
+    }
 
     async borrar(ID){
         try{
@@ -62,4 +69,25 @@ export class CSV{
         
     }
 
+    static async abrir (archivo_seleccion) {
+        const lista = await fs.readdir("csvs")
+        let archivo;
+        
+        if(typeof archivo_seleccion === 'number'){
+            archivo = lista[archivo_seleccion - 1]; //índice
+        } else if(typeof archivo_seleccion === 'string'){
+            archivo = archivo_seleccion;
+        } else {
+            console.log('Parámetro inválido para abrir');
+        }
+       
+        const file = new this()
+        file.fileName = archivo;
+        file.filePath = `${file.folder}/${archivo}`;
+        return file;
+    }
+
+     
 }
+
+
